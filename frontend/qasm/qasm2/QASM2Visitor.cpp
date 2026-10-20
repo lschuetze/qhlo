@@ -31,9 +31,7 @@
 #include <optional>
 #include <vector>
 
-using namespace qasm2;
-
-namespace quantum::frontend {
+namespace quantum::frontend::qasm2 {
 
 QASM2Visitor::QASM2Visitor(
     mlir::MLIRContext &context,
@@ -1116,4 +1114,4 @@ std::any QASM2Visitor::visitIfStatement(qasm2Parser::IfStatementContext* ctx)
     return {};
 }
 
-} // namespace quantum::frontend
+} // namespace quantum::frontend::qasm2

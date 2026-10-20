@@ -15,7 +15,7 @@ antlr_target(
     LEXER
 
     PACKAGE
-        qasm2
+        quantum::frontend::qasm2
 
     OUTPUT_DIRECTORY
         "${QASM2_GENERATED_DIR}"
@@ -29,7 +29,7 @@ antlr_target(
     VISITOR
 
     PACKAGE
-        qasm2
+        quantum::frontend::qasm2
 
     OUTPUT_DIRECTORY
         "${QASM2_GENERATED_DIR}"

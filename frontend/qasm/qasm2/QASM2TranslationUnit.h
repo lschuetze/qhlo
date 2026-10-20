@@ -15,8 +15,6 @@
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
 
-using namespace qasm2;
-
 namespace quantum::frontend::qasm2 {
 
 class QASM2ErrorListener final : public antlr4::BaseErrorListener {

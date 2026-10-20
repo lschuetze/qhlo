@@ -14,11 +14,10 @@
 #include <qasm2Parser.h>
 
 using namespace antlrcpp;
-using namespace qasm2;
 
 using namespace antlr4;
 
-namespace quantum::frontend {
+namespace quantum::frontend::qasm2 {
 
 struct GateDefinition {
     std::string name;
@@ -42,6 +41,6 @@ private:
     llvm::StringMap<GateDefinition> definitions;
 };
 
-} // namespace quantum::frontend
+} // namespace quantum::frontend::qasm2
 
 #endif // QUANTUM_MLIR_FRONTEND_QASM_QASM2_GATELIBRARY_H
