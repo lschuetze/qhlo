@@ -10,13 +10,13 @@
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/OwningOpRef.h>
 
-namespace quantum::frontend {
+namespace quantum::frontend::qasm2 {
 
 mlir::OwningOpRef<mlir::ModuleOp> parseQASM2(
     llvm::StringRef source,
     llvm::StringRef filename,
     mlir::MLIRContext &context);
 
-} // namespace quantum::frontend
+} // namespace quantum::frontend::qasm2
 
 #endif // QUANTUM_MLIR_FRONTEND_QASM_QASM2_QASM2FRONTEND_H

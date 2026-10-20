@@ -21,9 +21,10 @@
 #include <optional>
 #include <string>
 
-using namespace qasm2;
+namespace quantum::frontend::qasm2 {
 
-namespace quantum::frontend {
+using qasm2::qasm2Parser;
+using qasm2::qasm2ParserBaseVisitor;
 
 struct QuantumOperand {
     QASMScope::QuantumRegister* reg;
@@ -107,6 +108,6 @@ private:
     bool hadError = false;
 };
 
-} // namespace quantum::frontend
+} // namespace quantum::frontend::qasm2
 
 #endif // QUANTUM_MLIR_FRONTEND_QASM_QASM2_QASM2VISITOR_H

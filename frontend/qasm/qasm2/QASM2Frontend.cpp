@@ -21,7 +21,7 @@
 #include <mlir/IR/Diagnostics.h>
 #include <mlir/IR/Location.h>
 
-namespace quantum::frontend {
+namespace quantum::frontend::qasm2 {
 
 mlir::OwningOpRef<mlir::ModuleOp> parseQASM2(
     llvm::StringRef source,
@@ -146,4 +146,4 @@ mlir::OwningOpRef<mlir::ModuleOp> parseQASM2(
     return module;
 }
 
-} // namespace quantum::frontend
+} // namespace quantum::frontend::qasm2

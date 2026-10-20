@@ -5,7 +5,7 @@
 
 #include "GateLibrary.h"
 
-namespace quantum::frontend {
+namespace quantum::frontend::qasm2 {
 
 GateDefinition* GateLibrary::lookup(llvm::StringRef name)
 {
@@ -22,4 +22,4 @@ bool GateLibrary::insert(GateDefinition definition)
     return inserted;
 }
 
-} // namespace quantum::frontend
+} // namespace quantum::frontend::qasm2

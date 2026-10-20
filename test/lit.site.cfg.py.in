@@ -12,7 +12,9 @@ config.llvm_exe_ext = "@EXEEXT@"
 config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
 
 config.python_executable = "@Python3_EXECUTABLE@"
-config.enable_bindings_python = "@MLIR_ENABLE_BINDINGS_PYTHON@"
+config.enable_bindings_python = @MLIR_ENABLE_BINDINGS_PYTHON@
+config.enable_backend_qir = @BACKEND_QIR@
+config.enable_frontend_qasm = @FRONTEND_QASM@
 
 config.quantum_src_root = "@CMAKE_SOURCE_DIR@"
 config.quantum_obj_root = "@CMAKE_BINARY_DIR@"

@@ -66,7 +66,8 @@ mlir::OwningOpRef<mlir::ModuleOp> parseQASM(
         mlir::func::FuncDialect>();
 
     switch (detectQASMVersion(source)) {
-    case QASMVersion::QASM2: return parseQASM2(source, filename, context);
+    case QASMVersion::QASM2:
+        return qasm2::parseQASM2(source, filename, context);
 
     case QASMVersion::QASM3: return parseQASM3(source, filename, context);
 

@@ -360,6 +360,19 @@ With a preset-specific build directory, use that directory instead:
 cmake --build build/llvm-23.1.1 --target check-quantum-mlir
 ```
 
+The lit suites can also be run separately:
+
+| Target | Tests |
+| --- | --- |
+| `check-quantum-mlir` / `check-quantum-mlir-compiler` | Dialects, conversions, compiler driver, and enabled Python bindings |
+| `check-quantum-mlir-backend` | Code emission in `test/Target` |
+| `check-quantum-mlir-frontend` | `test/quantum-qasm` when `FRONTEND_QASM=ON` |
+| `check-quantum-mlir-integration` | `Integration/OpenQASM2` when `FRONTEND_QASM=ON`, plus `Integration/QIR-Runner` when `BACKEND_QIR=ON` |
+| `check-quantum-mlir-all` | All enabled lit suites |
+
+Disabled frontend suites are empty targets. Running lit directly also marks
+tests requiring disabled frontends or backends as unsupported.
+
 ### C++ Unit Tests
 
 Build the unit-test executable:

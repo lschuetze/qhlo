@@ -74,13 +74,19 @@ llvm_config.with_environment("PATH", config.quantum_tools_dir, append_path=True)
 tool_dirs = [config.quantum_tools_dir, config.llvm_tools_dir]
 tools = [
     "quantum-opt",
-    "quantum-qasm",
-    "mlir-runner",
     "mlir-translate",
-    add_runtime("mlir_runner_utils"),
-    add_runtime("mlir_c_runner_utils"),
     "not"
 ]
+
+if config.enable_frontend_qasm:
+    tools.append("quantum-qasm")
+
+if config.enable_backend_qir:
+    tools.extend([
+        "mlir-runner",
+        add_runtime("mlir_runner_utils"),
+        add_runtime("mlir_c_runner_utils"),
+    ])
 
 # Find QASM frontend
 qasm_import = config.qasm_frontend_dir + "/qasm-import.py"
