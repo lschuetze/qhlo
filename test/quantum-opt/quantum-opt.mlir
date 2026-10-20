@@ -3,3 +3,4 @@
 // CHECK-DAG: quantum
 // CHECK-DAG: qillr
 // CHECK-DAG: rvsdg
+// CHECK-DAG: qpu
