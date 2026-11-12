@@ -23,7 +23,8 @@ namespace mlir {
 
 namespace quantum {
 
-void populateQuantumOptimisePatterns(RewritePatternSet &patterns);
+void populateEliminatePhaseBeforeMeasurementPatterns(
+    RewritePatternSet &patterns);
 
 void populateHermitianCancelPatterns(RewritePatternSet &patterns);
 
@@ -31,8 +32,8 @@ void populateScfToRVSDGPatterns(
     TypeConverter converter,
     RewritePatternSet &patterns);
 
-/// Constructs the lower-funnel-shift pass.
-std::unique_ptr<Pass> createQuantumOptimisePass();
+/// Constructs the pass that eliminates phase gates before measurement.
+std::unique_ptr<Pass> createEliminatePhaseBeforeMeasurementPass();
 
 /// Pass that realizes self-adjoint gate cancellation
 std::unique_ptr<Pass> createHermitianCancelPass();

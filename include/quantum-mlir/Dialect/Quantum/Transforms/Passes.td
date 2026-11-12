@@ -9,13 +9,13 @@
 
 include "mlir/Pass/PassBase.td"
 
-def QuantumOptimise : Pass<"quantum-optimise", "ModuleOp"> {
-  let summary = "Optimise the `quantum` dialect";
+def EliminatePhaseBeforeMeasurement : Pass<"quantum-eliminate-phase-before-measurement", "ModuleOp"> {
+  let summary = "Eliminate phase gates immediately before measurement";
 
   let description = [{
   }];
 
-  let constructor = "mlir::quantum::createQuantumOptimisePass()";
+  let constructor = "mlir::quantum::createEliminatePhaseBeforeMeasurementPass()";
 }
 
 def HermitianCancel : Pass<"hermitian-cancel", "ModuleOp"> {

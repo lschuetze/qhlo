@@ -1,4 +1,4 @@
-// RUN: quantum-opt --quantum-optimise %s -split-input-file | FileCheck %s
+// RUN: quantum-opt --quantum-eliminate-phase-before-measurement %s -split-input-file | FileCheck %s
 
 // CHECK-LABEL: func.func @drop_z_before_measure(
 func.func @drop_z_before_measure() -> !quantum.qubit<1> {

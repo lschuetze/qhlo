@@ -1,6 +1,6 @@
 add_mlir_dialect_library(QuantumTransforms
         Hermitian.cpp
-        GateOptimization.cpp
+        EliminatePhaseBeforeMeasurement.cpp
         PhasePolynomialMerge.cpp
         VerifyLinearity.cpp
 

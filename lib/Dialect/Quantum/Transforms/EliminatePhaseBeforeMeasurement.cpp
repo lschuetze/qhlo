@@ -1,4 +1,4 @@
-/// Implements the gate optimization.
+/// Eliminates phase gates immediately before measurement.
 ///
 /// @file
 /// @author     Lars Schütze (lars.schuetze@tu-dresden.de)
@@ -18,7 +18,7 @@ using namespace mlir::quantum;
 
 namespace mlir::quantum {
 
-#define GEN_PASS_DEF_QUANTUMOPTIMISE
+#define GEN_PASS_DEF_ELIMINATEPHASEBEFOREMEASUREMENT
 #include "quantum-mlir/Dialect/Quantum/Transforms/Passes.h.inc"
 
 } // namespace mlir::quantum
@@ -27,16 +27,18 @@ namespace mlir::quantum {
 
 namespace {
 
-struct QuantumOptimisePass
-        : mlir::quantum::impl::QuantumOptimiseBase<QuantumOptimisePass> {
-    using QuantumOptimiseBase::QuantumOptimiseBase;
+struct EliminatePhaseBeforeMeasurementPass
+        : mlir::quantum::impl::EliminatePhaseBeforeMeasurementBase<
+              EliminatePhaseBeforeMeasurementPass> {
+    using EliminatePhaseBeforeMeasurementBase::
+        EliminatePhaseBeforeMeasurementBase;
 
     void runOnOperation() override;
 };
 
 /// Pattern: Drop phase gates immediately before measurement
 template<typename PhaseOp>
-struct DropPhaseBeforeMeasure : OpRewritePattern<PhaseOp> {
+struct EliminatePhaseBeforeMeasurement : OpRewritePattern<PhaseOp> {
     using OpRewritePattern<PhaseOp>::OpRewritePattern;
 
     LogicalResult
@@ -53,23 +55,24 @@ struct DropPhaseBeforeMeasure : OpRewritePattern<PhaseOp> {
 
 } // namespace
 
-void QuantumOptimisePass::runOnOperation()
+void EliminatePhaseBeforeMeasurementPass::runOnOperation()
 {
     RewritePatternSet patterns(&getContext());
-    populateQuantumOptimisePatterns(patterns);
+    populateEliminatePhaseBeforeMeasurementPatterns(patterns);
     if (failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
         signalPassFailure();
 }
 
-void mlir::quantum::populateQuantumOptimisePatterns(RewritePatternSet &patterns)
+void mlir::quantum::populateEliminatePhaseBeforeMeasurementPatterns(
+    RewritePatternSet &patterns)
 {
     patterns.add<
-        DropPhaseBeforeMeasure<ZOp>,
-        DropPhaseBeforeMeasure<SOp>,
-        DropPhaseBeforeMeasure<TOp>,
-        DropPhaseBeforeMeasure<SdgOp>,
-        DropPhaseBeforeMeasure<TdgOp>>(patterns.getContext());
+        EliminatePhaseBeforeMeasurement<ZOp>,
+        EliminatePhaseBeforeMeasurement<SOp>,
+        EliminatePhaseBeforeMeasurement<TOp>,
+        EliminatePhaseBeforeMeasurement<SdgOp>,
+        EliminatePhaseBeforeMeasurement<TdgOp>>(patterns.getContext());
 }
 
-std::unique_ptr<Pass> mlir::quantum::createQuantumOptimisePass()
-{ return std::make_unique<QuantumOptimisePass>(); }
+std::unique_ptr<Pass> mlir::quantum::createEliminatePhaseBeforeMeasurementPass()
+{ return std::make_unique<EliminatePhaseBeforeMeasurementPass>(); }
