@@ -400,6 +400,7 @@ def Quantum_IdOp : PrimitiveGate_Op<
   "id",
   [
     Hermitian,
+    NoMemoryEffect,
     AllTypesMatch<["input", "result"]>,
     InferRegisterRangesInterface,
     InferPhasePolynomialInterface
@@ -621,6 +622,7 @@ def Quantum_SWAPOp : PrimitiveGate_Op<
   "SWAP",
   [
     Hermitian,
+    NoMemoryEffect,
     AllTypesMatch<[ "lhs", "rhs","result_lhs", "result_rhs"]>,
     InferRegisterRangesInterface,
     DeclareOpInterfaceMethods<
@@ -717,7 +719,7 @@ def Quantum_RzOp : PrimitiveGate_Op<
 def Quantum_PhaseOp : PrimitiveGate_Op<
   "P",
   [
-    Hermitian,
+    Unitary,
     NoMemoryEffect,
     AllTypesMatch<["input", "result"]>,
     InferRegisterRangesInterface
@@ -865,6 +867,7 @@ def Quantum_CSWAPOp : PrimitiveGate_Op<
   "CSWAP",
   [
     Hermitian,
+    NoMemoryEffect,
     AllTypesMatch<["control", "control_out", "lhs", "rhs", "lhs_out", "rhs_out"]>,
     InferRegisterRangesInterface
   ]> {
