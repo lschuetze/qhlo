@@ -11,16 +11,17 @@
 #include "quantum-mlir/Dialect/Quantum/Interfaces/InferPhasePolynomialInterface.h"
 #include "quantum-mlir/Dialect/Quantum/Transforms/Passes.h"
 
-#include <cstdint>
-#include <llvm/ADT/APFloat.h>
+#include <llvm/ADT/MapVector.h>
+#include <llvm/ADT/STLExtras.h>
 #include <llvm/Support/Debug.h>
 #include <mlir/Analysis/DataFlow/ConstantPropagationAnalysis.h>
 #include <mlir/Analysis/DataFlow/DeadCodeAnalysis.h>
 #include <mlir/Analysis/DataFlow/SparseAnalysis.h>
 #include <mlir/IR/Builders.h>
-#include <mlir/IR/BuiltinAttributes.h>
 #include <mlir/IR/BuiltinOps.h>
+#include <mlir/IR/Dominance.h>
 #include <mlir/Pass/Pass.h>
+#include <utility>
 
 #define DEBUG_TYPE "quantum-phase-poly-merge"
 
@@ -50,6 +51,7 @@ struct PhasePolynomialMergePass
 
 static Value buildSum(ArrayRef<Value> thetas, OpBuilder &builder, Location loc)
 {
+    assert(!thetas.empty() && "Cannot build an empty angle sum");
     if (thetas.size() == 1) return thetas[0];
 
     SmallVector<Value> next;
@@ -67,6 +69,78 @@ static Value buildSum(ArrayRef<Value> thetas, OpBuilder &builder, Location loc)
     return buildSum(next, builder, loc);
 }
 
+// Equal parity is a candidate for merging, not a proof of execution
+// compatibility.
+struct RotationGroup {
+    explicit RotationGroup(RzOp rotation) : rotations{rotation} {}
+
+    bool tryAppend(RzOp rotation, const DominanceInfo &dominance)
+    {
+        RzOp first = rotations.front();
+        if (rotation->getBlock() != first->getBlock()
+            || !rotations.back()->isBeforeInBlock(rotation)
+            || rotation.getTheta().getType() != first.getTheta().getType()
+            || !dominance.properlyDominates(rotation.getTheta(), first))
+            return false;
+
+        rotations.push_back(rotation);
+        return true;
+    }
+
+    void merge()
+    {
+        if (rotations.size() < 2) return;
+
+        RzOp first = rotations.front();
+        OpBuilder builder(first);
+        auto thetas = llvm::map_to_vector(
+            rotations,
+            [](RzOp rotation) -> Value { return rotation.getTheta(); });
+        Value theta = buildSum(thetas, builder, first.getLoc());
+        RzOp merged =
+            RzOp::create(builder, first.getLoc(), first.getInput(), theta);
+
+        first.getResult().replaceAllUsesWith(merged.getResult());
+        for (RzOp rotation : rotations) {
+            rotation.getResult().replaceAllUsesWith(rotation.getInput());
+            rotation->erase();
+        }
+        rotations.clear();
+    }
+
+private:
+    SmallVector<RzOp> rotations;
+};
+
+struct RotationGroups {
+    void collect(
+        RzOp rotation,
+        ArrayRef<ConstantPhasePolynomial> polynomial,
+        const DominanceInfo &dominance)
+    {
+        auto &candidates = groups[{
+            rotation->getBlock(),
+            SmallVector<ConstantPhasePolynomial>(polynomial)}];
+        // A later angle may be unavailable at an earlier group's insertion
+        // point. Keep separate groups so subsequent rotations can still merge.
+        for (RotationGroup &group : candidates)
+            if (group.tryAppend(rotation, dominance)) return;
+        candidates.emplace_back(rotation);
+    }
+
+    void merge()
+    {
+        for (auto &[key, candidates] : groups)
+            for (RotationGroup &group : candidates) group.merge();
+        groups.clear();
+    }
+
+private:
+    using Key = std::pair<Block*, SmallVector<ConstantPhasePolynomial>>;
+    // Preserve collection order to make the rewrite deterministic.
+    llvm::MapVector<Key, SmallVector<RotationGroup>> groups;
+};
+
 } // namespace
 
 void PhasePolynomialMergePass::runOnOperation()
@@ -81,8 +155,8 @@ void PhasePolynomialMergePass::runOnOperation()
         solver.load<quantum::dataflow::PhasePolynomialAnalysis>(
             circOp.getOperation());
 
-        llvm::DenseMap<SmallVector<ConstantPhasePolynomial>, SmallVector<RzOp>>
-            groups;
+        DominanceInfo dominance(circOp);
+        RotationGroups groups;
 
         if (failed(solver.initializeAndRun(circOp))) return signalPassFailure();
 
@@ -93,48 +167,17 @@ void PhasePolynomialMergePass::runOnOperation()
         circOp->walk([&](RzOp rzop) {
             const PhasePolynomialLattice* lattice =
                 solver.lookupState<PhasePolynomialLattice>(rzop.getInput());
-            if (!lattice)
-                rzop->emitOpError(
-                    "does not possess a phase polynomial "
-                    "representation.");
+            // Unreachable operations and unknown inputs cannot justify a merge.
+            if (!lattice || lattice->getValue().isUninitialized()) return;
 
             LLVM_DEBUG(
                 llvm::dbgs() << "[PhasePolyMerge]: Collect "
                              << lattice->getValue() << " for " << rzop << "\n");
 
-            auto key = lattice->getValue().getValue();
-            groups[key].push_back(rzop);
+            groups.collect(rzop, lattice->getValue().getValue(), dominance);
         });
 
-        // Merge all rotations that share the same parity bits inside the same
-        // epoch
-        for (auto &[poly, ops] : groups) {
-            if (ops.size() < 2) {
-                LLVM_DEBUG(
-                    llvm::dbgs() << "[PhasePolyMerge]: Ignore operation "
-                                 << ops[0] << " with " << poly[0] << "\n");
-                continue;
-            }
-
-            OpBuilder builder(ops[0]);
-            SmallVector<Value> thetas;
-            for (RzOp rz : ops) thetas.push_back(rz.getTheta());
-
-            Value accumulatedTheta =
-                buildSum(thetas, builder, ops[0]->getLoc());
-
-            RzOp mergedRz = RzOp::create(
-                builder,
-                ops[0].getLoc(),
-                ops[0].getInput(),
-                accumulatedTheta);
-
-            ops[0].getResult().replaceAllUsesWith(mergedRz.getResult());
-            for (RzOp rz : ops) {
-                rz.getResult().replaceAllUsesWith(rz.getInput());
-                rz->erase();
-            }
-        }
+        groups.merge();
     });
 }
 
