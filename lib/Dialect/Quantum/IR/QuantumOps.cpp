@@ -166,37 +166,6 @@ void MeasureOp::inferResultRanges(
 // InferPhasePolynomialInterface Hooks
 //===--------------------------------------------------------------------===//
 
-void AllocOp::inferResultPolynomial(
-    [[maybe_unused]] ArrayRef<PhasePolynomial> argPolynomials,
-    SetPolynomialFn setResultPolynomials)
-{
-    auto module = getOperation()->getParentOfType<qpu::QPUModuleOp>();
-    auto targets = module.getTargetsAttr();
-    if (!targets) {
-        getOperation()->emitError()
-            << "expected qpu.module to have a 'targets' attribute";
-        return;
-    }
-    auto target = llvm::dyn_cast<qpu::TargetAttr>(targets[0]);
-    size_t qubitCount = target.getQubits().getInt();
-
-    size_t allocatedQubitsBegin = getPos().value();
-    size_t allocatedQubitsEnd =
-        allocatedQubitsBegin + getResult().getType().getSize();
-
-    llvm::SmallVector<ConstantPhasePolynomial> values;
-    llvm::SmallVector<size_t> qubits;
-    for (size_t i = allocatedQubitsBegin; i < allocatedQubitsEnd; ++i) {
-        ConstantPhasePolynomial localResult(qubitCount, 0);
-        localResult.setBit(i);
-        values.push_back(localResult);
-        qubits.push_back(i);
-    }
-
-    PhasePolynomial resultPoly(values, qubits);
-    setResultPolynomials(getResult(), resultPoly);
-}
-
 void CNOTOp::inferResultPolynomial(
     ArrayRef<PhasePolynomial> argPolynomials,
     SetPolynomialFn setResultPolynomials)

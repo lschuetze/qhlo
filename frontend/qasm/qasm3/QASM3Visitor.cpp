@@ -1696,11 +1696,8 @@ std::any QASM3Visitor::visitQuantumDeclarationStatement(
     if (mlir::failed(size)) return {};
 
     auto type = mlir::quantum::QubitType::get(&context, *size);
-    auto alloc = mlir::quantum::AllocOp::create(
-        builder,
-        getLocation(ctx),
-        type,
-        mlir::IntegerAttr{});
+    auto alloc =
+        mlir::quantum::AllocOp::create(builder, getLocation(ctx), type);
 
     if (!scope.declareQReg(
             id,

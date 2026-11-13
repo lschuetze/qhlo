@@ -71,27 +71,18 @@ static Value buildSum(ArrayRef<Value> thetas, OpBuilder &builder, Location loc)
 
 void PhasePolynomialMergePass::runOnOperation()
 {
-    mlir::DataFlowSolver solver;
-    solver.load<mlir::dataflow::DeadCodeAnalysis>();
-    solver.load<mlir::dataflow::SparseConstantPropagation>();
-    solver.load<quantum::dataflow::PhasePolynomialAnalysis>();
-
-    llvm::DenseMap<SmallVector<ConstantPhasePolynomial>, SmallVector<RzOp>>
-        groups;
-
     // Each qpu::circuit is the root of a quantum circuit
     // Run analysis on each circuit and collect operations with same-valued
     // epochs and parity bits
     getOperation().walk([&](qpu::CircuitOp circOp) {
-        // Workaround: assign each allocop a position
-        size_t nqubits = 0;
-        circOp->walk([&](quantum::AllocOp allocOp) {
-            allocOp.setPosAttr(
-                IntegerAttr::get(
-                    IntegerType::get(allocOp.getContext(), 32),
-                    nqubits));
-            nqubits += allocOp.getResult().getType().getSize();
-        });
+        mlir::DataFlowSolver solver;
+        solver.load<mlir::dataflow::DeadCodeAnalysis>();
+        solver.load<mlir::dataflow::SparseConstantPropagation>();
+        solver.load<quantum::dataflow::PhasePolynomialAnalysis>(
+            circOp.getOperation());
+
+        llvm::DenseMap<SmallVector<ConstantPhasePolynomial>, SmallVector<RzOp>>
+            groups;
 
         if (failed(solver.initializeAndRun(circOp))) return signalPassFailure();
 
@@ -114,35 +105,37 @@ void PhasePolynomialMergePass::runOnOperation()
             auto key = lattice->getValue().getValue();
             groups[key].push_back(rzop);
         });
+
+        // Merge all rotations that share the same parity bits inside the same
+        // epoch
+        for (auto &[poly, ops] : groups) {
+            if (ops.size() < 2) {
+                LLVM_DEBUG(
+                    llvm::dbgs() << "[PhasePolyMerge]: Ignore operation "
+                                 << ops[0] << " with " << poly[0] << "\n");
+                continue;
+            }
+
+            OpBuilder builder(ops[0]);
+            SmallVector<Value> thetas;
+            for (RzOp rz : ops) thetas.push_back(rz.getTheta());
+
+            Value accumulatedTheta =
+                buildSum(thetas, builder, ops[0]->getLoc());
+
+            RzOp mergedRz = RzOp::create(
+                builder,
+                ops[0].getLoc(),
+                ops[0].getInput(),
+                accumulatedTheta);
+
+            ops[0].getResult().replaceAllUsesWith(mergedRz.getResult());
+            for (RzOp rz : ops) {
+                rz.getResult().replaceAllUsesWith(rz.getInput());
+                rz->erase();
+            }
+        }
     });
-
-    // Merge all rotations that share the same parity bits inside the same epoch
-    for (auto &[poly, ops] : groups) {
-        if (ops.size() < 2) {
-            LLVM_DEBUG(
-                llvm::dbgs() << "[PhasePolyMerge]: Ignore operation " << ops[0]
-                             << " with " << poly[0] << "\n");
-            continue;
-        }
-
-        OpBuilder builder(ops[0]);
-        SmallVector<Value> thetas;
-        for (RzOp rz : ops) thetas.push_back(rz.getTheta());
-
-        Value accumulatedTheta = buildSum(thetas, builder, ops[0]->getLoc());
-
-        RzOp mergedRz = RzOp::create(
-            builder,
-            ops[0].getLoc(),
-            ops[0].getInput(),
-            accumulatedTheta);
-
-        ops[0].getResult().replaceAllUsesWith(mergedRz.getResult());
-        for (RzOp rz : ops) {
-            rz.getResult().replaceAllUsesWith(rz.getInput());
-            rz->erase();
-        }
-    }
 }
 
 std::unique_ptr<Pass> mlir::quantum::createPhasePolynomialMergePass()

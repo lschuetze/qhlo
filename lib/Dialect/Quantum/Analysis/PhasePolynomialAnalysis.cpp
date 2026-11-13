@@ -5,6 +5,7 @@
 
 #include "quantum-mlir/Dialect/Quantum/Analysis/PhasePolynomialAnalysis.h"
 
+#include "quantum-mlir/Dialect/Quantum/IR/QuantumOps.h"
 #include "quantum-mlir/Dialect/Quantum/Interfaces/InferPhasePolynomialInterface.h"
 
 #include "llvm/Support/Debug.h"
@@ -17,11 +18,46 @@ using namespace mlir;
 using namespace mlir::quantum;
 using namespace mlir::quantum::dataflow;
 
+PhasePolynomialAnalysis::PhasePolynomialAnalysis(
+    DataFlowSolver &solver,
+    Operation* root)
+        : SparseForwardDataFlowAnalysis(solver)
+{
+    // Assign all identities before solving so every parity vector has the same
+    // width.
+    root->walk([&](AllocOp alloc) {
+        allocationOffsets.try_emplace(alloc.getResult(), qubitCount);
+        qubitCount += alloc.getResult().getType().getSize();
+    });
+}
+
 LogicalResult PhasePolynomialAnalysis::visitOperation(
     Operation* op,
     ArrayRef<const PhasePolynomialLattice*> operands,
     ArrayRef<PhasePolynomialLattice*> results)
 {
+    if (auto alloc = llvm::dyn_cast<AllocOp>(op)) {
+        auto it = allocationOffsets.find(alloc.getResult());
+        assert(
+            it != allocationOffsets.end()
+            && "Allocation must belong to the analysis root");
+
+        size_t begin = it->second;
+        size_t end = begin + alloc.getResult().getType().getSize();
+        llvm::SmallVector<ConstantPhasePolynomial> values;
+        llvm::SmallVector<size_t> qubits;
+        for (size_t i = begin; i < end; ++i) {
+            ConstantPhasePolynomial polynomial(qubitCount, 0);
+            polynomial.setBit(i);
+            values.push_back(polynomial);
+            qubits.push_back(i);
+        }
+
+        PhasePolynomial initial(values, qubits);
+        propagateIfChanged(results[0], results[0]->join(initial));
+        return success();
+    }
+
     auto inferrable = llvm::dyn_cast<InferPhasePolynomialInterface>(op);
     if (!inferrable) {
         setAllToEntryStates(results);

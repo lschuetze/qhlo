@@ -8,6 +8,7 @@
 
 #include "quantum-mlir/Dialect/Quantum/Interfaces/InferPhasePolynomialInterface.h"
 
+#include <llvm/ADT/DenseMap.h>
 #include <mlir/Analysis/DataFlow/SparseAnalysis.h>
 #include <mlir/Analysis/DataFlowFramework.h>
 #include <mlir/Interfaces/ControlFlowInterfaces.h>
@@ -32,20 +33,24 @@ class PhasePolynomialAnalysis
         : public mlir::dataflow::SparseForwardDataFlowAnalysis<
               PhasePolynomialLattice> {
 public:
-    explicit PhasePolynomialAnalysis(DataFlowSolver &solver)
-            : SparseForwardDataFlowAnalysis(solver)
-    {}
+    PhasePolynomialAnalysis(DataFlowSolver &solver, Operation* root);
 
     /// At an entry point, we cannot reason about phase polynomials.
     void setToEntryState(PhasePolynomialLattice* lattice) override
     { propagateIfChanged(lattice, lattice->join(PhasePolynomial())); }
 
-    /// Visit an operation. Invoke the transfer function on each operation that
-    /// implements `InferPhasePolynomialInterface`.
+    /// Initialize allocations or invoke the operation's polynomial transfer
+    /// function.
     LogicalResult visitOperation(
         Operation* op,
         ArrayRef<const PhasePolynomialLattice*> operands,
         ArrayRef<PhasePolynomialLattice*> results) override;
+
+private:
+    // Symbolic qubit identities belong to this analysis, not physical
+    // placement.
+    llvm::DenseMap<Value, size_t> allocationOffsets;
+    size_t qubitCount = 0;
 };
 } // namespace dataflow
 } // namespace quantum

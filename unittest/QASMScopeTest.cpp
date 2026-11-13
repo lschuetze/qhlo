@@ -39,8 +39,7 @@ struct ScopeFixture {
         auto alloc = mlir::quantum::AllocOp::create(
             builder,
             loc,
-            mlir::quantum::QubitType::get(&context, size),
-            mlir::IntegerAttr{});
+            mlir::quantum::QubitType::get(&context, size));
         auto* reg = scope.declareQReg("q", size, alloc.getResult());
         REQUIRE(reg);
         return *reg;
@@ -225,8 +224,7 @@ TEST_CASE("All declaration kinds share a namespace and preserve collisions")
     auto qubit = mlir::quantum::AllocOp::create(
         f.builder,
         f.loc,
-        mlir::quantum::QubitType::get(&f.context, 1),
-        mlir::IntegerAttr{});
+        mlir::quantum::QubitType::get(&f.context, 1));
     for (unsigned kind = 0; kind != 5; ++kind) {
         quantum::frontend::QASMScope scope;
         switch (kind) {

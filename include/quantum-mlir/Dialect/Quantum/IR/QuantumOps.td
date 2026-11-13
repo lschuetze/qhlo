@@ -236,9 +236,6 @@ def Quantum_AllocOp : Memory_Op<
     DeclareOpInterfaceMethods<
       InferRegisterRangesInterface, ["inferResultRanges"]
     >,
-    DeclareOpInterfaceMethods<
-      InferPhasePolynomialInterface, ["inferResultPolynomial"]
-    >,
     NoClone
   ]> {
   let summary = "Allocate n qubits into a quantum register.";
@@ -251,10 +248,6 @@ def Quantum_AllocOp : Memory_Op<
     %q0 = quantum.alloc : !quantum.qubit<5>
     ```
   }];
-
-  let arguments = (ins
-    OptionalAttr<ConfinedAttr<I32Attr, [IntNonNegative]>>:$pos
-  );
 
   let results = (outs Quantum_QubitType:$result);
 }

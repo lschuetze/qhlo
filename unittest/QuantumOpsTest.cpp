@@ -26,8 +26,7 @@ TEST_CASE(
                 return mlir::quantum::AllocOp::create(
                            builder,
                            loc,
-                           mlir::quantum::QubitType::get(&context, width),
-                           mlir::IntegerAttr{})
+                           mlir::quantum::QubitType::get(&context, width))
                     .getResult();
             };
             llvm::SmallVector<mlir::Value> controls;

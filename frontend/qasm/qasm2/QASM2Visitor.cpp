@@ -332,11 +332,8 @@ std::any QASM2Visitor::visitOldStyleDeclarationStatement(
 
     if (ctx->QREG()) {
         auto type = mlir::quantum::QubitType::get(&context, *size);
-        auto alloc = mlir::quantum::AllocOp::create(
-            builder,
-            getLocation(ctx),
-            type,
-            mlir::IntegerAttr{});
+        auto alloc =
+            mlir::quantum::AllocOp::create(builder, getLocation(ctx), type);
 
         if (!scope.declareQReg(name, *size, alloc.getResult()))
             error(ctx, "redefinition of '" + name + "'");
