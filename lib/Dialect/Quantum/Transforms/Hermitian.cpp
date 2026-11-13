@@ -4,14 +4,13 @@
 /// @author     Lars Schütze (lars.schuetze@tu-dresden.de)
 /// @author     Washim Neupane (washimneupane@outlook.com)
 
-#include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "quantum-mlir/Dialect/Quantum/IR/Quantum.h"
 #include "quantum-mlir/Dialect/Quantum/Transforms/Passes.h"
 
-#include <algorithm>
+#include "llvm/ADT/STLExtras.h"
 
 using namespace mlir;
 using namespace mlir::quantum;
@@ -43,21 +42,17 @@ struct FoldDoubleHermitian : OpTraitRewritePattern<Hermitian> {
     LogicalResult
     matchAndRewrite(Operation* op, PatternRewriter &rewriter) const override
     {
-        bool isSame = std::all_of(
-            op->getOperands().begin(),
-            op->getOperands().end(),
-            [&](auto operand) {
-                auto inner = operand.getDefiningOp();
-                return inner && inner->template hasTrait<Hermitian>()
-                       && inner->getName() == op->getName();
-            });
+        if (op->getNumOperands() == 0) return failure();
 
-        if (isSame) {
-            auto inner = op->getOperand(0).getDefiningOp();
-            rewriter.replaceOp(op, inner->getOperands());
-            return success();
-        }
-        return failure();
+        auto inner = op->getOperand(0).getDefiningOp();
+        if (!inner || inner->getName() != op->getName()) return failure();
+
+        // Cancellation requires the same gate instance and wire ordering.
+        if (!llvm::equal(op->getOperands(), inner->getResults()))
+            return failure();
+
+        rewriter.replaceOp(op, inner->getOperands());
+        return success();
     }
 };
 
@@ -67,7 +62,11 @@ void HermitianCancelPass::runOnOperation()
 {
     RewritePatternSet patterns(&getContext());
     populateHermitianCancelPatterns(patterns);
-    if (failed(applyPatternsGreedily(getOperation(), std::move(patterns))))
+    // Use the pattern's wiring checks instead of the Hermitian trait folder.
+    GreedyRewriteConfig config;
+    config.enableFolding(false);
+    if (failed(
+            applyPatternsGreedily(getOperation(), std::move(patterns), config)))
         signalPassFailure();
 }
 
