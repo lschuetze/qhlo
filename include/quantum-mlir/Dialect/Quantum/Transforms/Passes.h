@@ -44,6 +44,8 @@ std::unique_ptr<Pass> createPhasePolynomialMergePass();
 
 std::unique_ptr<Pass> createVerifyLinearityPass();
 
+std::unique_ptr<Pass> createDecomposeGatesPass();
+
 //===----------------------------------------------------------------------===//
 // Registration
 //===----------------------------------------------------------------------===//

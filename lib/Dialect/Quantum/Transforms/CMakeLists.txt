@@ -3,6 +3,7 @@ add_mlir_dialect_library(QuantumTransforms
         EliminatePhaseBeforeMeasurement.cpp
         PhasePolynomialMerge.cpp
         VerifyLinearity.cpp
+        DecomposeGates.cpp
 
     ENABLE_AGGREGATION
 
