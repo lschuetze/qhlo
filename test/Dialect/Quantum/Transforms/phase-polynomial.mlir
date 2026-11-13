@@ -1,4 +1,4 @@
-// RUN: quantum-opt --phase-poly-merge -split-input-file %s | FileCheck %s
+// RUN: quantum-opt --quantum-phase-poly-merge -split-input-file %s | FileCheck %s
 
 //                                          ┌───────────┐          
 // q_0: ───────────────■─────────────────■──┤ Rz(0.987) ├──■───|0>─

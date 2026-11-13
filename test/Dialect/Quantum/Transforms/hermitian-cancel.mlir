@@ -1,4 +1,4 @@
-// RUN: quantum-opt -hermitian-cancel -split-input-file %s | FileCheck %s
+// RUN: quantum-opt -quantum-hermitian-cancel -split-input-file %s | FileCheck %s
 
 // Reversing control and target does not apply the same gate twice.
 // CHECK-LABEL: func.func @reversed_cnot(

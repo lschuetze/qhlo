@@ -1,6 +1,6 @@
 // RUN: quantum-qasm %s -split-input-file > %t.mlir
 // RUN: FileCheck %s --enable-var-scope < %t.mlir
-// RUN: quantum-opt %t.mlir -split-input-file -verify-linearity -o /dev/null
+// RUN: quantum-opt %t.mlir -split-input-file -quantum-verify-linearity -o /dev/null
 // RUN: quantum-opt %t.mlir -split-input-file -convert-quantum-to-qillr > %t.qillr.mlir
 // RUN: FileCheck %s --check-prefix=QILLR --enable-var-scope < %t.qillr.mlir
 

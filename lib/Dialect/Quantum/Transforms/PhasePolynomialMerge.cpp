@@ -22,7 +22,7 @@
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
 
-#define DEBUG_TYPE "phase-poly-merge"
+#define DEBUG_TYPE "quantum-phase-poly-merge"
 
 using namespace mlir;
 using namespace mlir::quantum;

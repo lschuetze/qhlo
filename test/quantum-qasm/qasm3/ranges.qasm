@@ -1,4 +1,4 @@
-// RUN: quantum-qasm %s -split-input-file | quantum-opt -split-input-file --verify-linearity | \
+// RUN: quantum-qasm %s -split-input-file | quantum-opt -split-input-file --quantum-verify-linearity | \
 // RUN:   FileCheck %s --enable-var-scope
 
 // Contiguous.

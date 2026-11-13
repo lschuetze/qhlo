@@ -1,5 +1,5 @@
 // RUN: quantum-opt -canonicalize -split-input-file %s | FileCheck %s
-// RUN: quantum-opt -hermitian-cancel -split-input-file %s | FileCheck %s
+// RUN: quantum-opt -quantum-hermitian-cancel -split-input-file %s | FileCheck %s
 
 // CHECK-LABEL: func.func @triple_h_cancel(
 func.func @triple_h_cancel() -> !quantum.qubit<1> {

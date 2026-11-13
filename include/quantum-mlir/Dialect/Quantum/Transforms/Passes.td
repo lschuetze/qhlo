@@ -9,7 +9,8 @@
 
 include "mlir/Pass/PassBase.td"
 
-def EliminatePhaseBeforeMeasurement : Pass<"quantum-eliminate-phase-before-measurement", "ModuleOp"> {
+def EliminatePhaseBeforeMeasurement
+    : Pass<"quantum-eliminate-phase-before-measurement", "mlir::ModuleOp"> {
   let summary = "Eliminate phase gates immediately before measurement";
 
   let description = [{
@@ -18,7 +19,7 @@ def EliminatePhaseBeforeMeasurement : Pass<"quantum-eliminate-phase-before-measu
   let constructor = "mlir::quantum::createEliminatePhaseBeforeMeasurementPass()";
 }
 
-def HermitianCancel : Pass<"hermitian-cancel", "ModuleOp"> {
+def HermitianCancel : Pass<"quantum-hermitian-cancel", "mlir::ModuleOp"> {
   let summary = "Hermitian Cancellation on the `quantum` dialect";
 
   let description = [{
@@ -27,16 +28,21 @@ def HermitianCancel : Pass<"hermitian-cancel", "ModuleOp"> {
   let constructor = "mlir::quantum::createHermitianCancelPass()";
 }
 
-def PhasePolynomialMerge : Pass<"phase-poly-merge", "ModuleOp"> {
+def PhasePolynomialMerge : Pass<"quantum-phase-poly-merge", "mlir::ModuleOp"> {
   let summary = "Rotation gate merging based on phase polynomial analysis.";
-  
+
   let description = [{
   }];
 
   let constructor = "mlir::quantum::createPhasePolynomialMergePass()";
+
+  let dependentDialects = [
+    "mlir::arith::ArithDialect",
+    "mlir::quantum::QuantumDialect"
+  ];
 }
 
-def VerifyLinearity : Pass<"verify-linearity", "ModuleOp"> {
+def VerifyLinearity : Pass<"quantum-verify-linearity", "mlir::ModuleOp"> {
   let summary = "Check linearity of qubit-consuming operations.";
 
   let description = [{
@@ -45,7 +51,7 @@ def VerifyLinearity : Pass<"verify-linearity", "ModuleOp"> {
   let constructor = "mlir::quantum::createVerifyLinearityPass()";
 }
 
-def DecomposeGates : Pass<"decompose-gates", "ModuleOp"> {
+def DecomposeGates : Pass<"quantum-decompose-gates", "mlir::ModuleOp"> {
   let summary = "Decompose selected gates using named methods";
 
   let description = [{
@@ -57,14 +63,15 @@ def DecomposeGates : Pass<"decompose-gates", "ModuleOp"> {
     methods and duplicate gate selections are errors.
   }];
 
-  let options = [
-    ListOption<"decompositions", "decompositions", "std::string",
-               "Gate:method pairs; supported: quantum.CCX:qelib1 (aliases: CCX, Toffoli)">
-  ];
+  let constructor = "mlir::quantum::createDecomposeGatesPass()";
 
   let dependentDialects = ["mlir::quantum::QuantumDialect"];
 
-  let constructor = "mlir::quantum::createDecomposeGatesPass()";
+  let options = [
+    ListOption<"decompositions", "decompositions", "std::string",
+               "Gate:method pairs; supported: quantum.CCX:qelib1 "
+               "(aliases: CCX, Toffoli)">
+  ];
 }
 
 #endif // QUANTUM_PASSES

@@ -1,4 +1,4 @@
-//RUN: quantum-opt %s -split-input-file -verify-linearity -verify-diagnostics
+//RUN: quantum-opt %s -split-input-file -quantum-verify-linearity -verify-diagnostics
 
 func.func @qubit_multiple_uses_same_region() -> () {
     %q = "quantum.alloc" () : () -> (!quantum.qubit<1>)

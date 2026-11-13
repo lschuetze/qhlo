@@ -1,7 +1,7 @@
-// RUN: quantum-opt %s --decompose-gates | FileCheck %s --check-prefix=UNCHANGED
-// RUN: quantum-opt %s --pass-pipeline='builtin.module(decompose-gates{decompositions=quantum.CCX:qelib1},verify-linearity)' | FileCheck %s
-// RUN: quantum-opt %s --decompose-gates='decompositions=CCX:qelib1' | FileCheck %s
-// RUN: quantum-opt %s --decompose-gates='decompositions=Toffoli:qelib1' | FileCheck %s
+// RUN: quantum-opt %s --quantum-decompose-gates | FileCheck %s --check-prefix=UNCHANGED
+// RUN: quantum-opt %s --pass-pipeline='builtin.module(quantum-decompose-gates{decompositions=quantum.CCX:qelib1},quantum-verify-linearity)' | FileCheck %s
+// RUN: quantum-opt %s --quantum-decompose-gates='decompositions=CCX:qelib1' | FileCheck %s
+// RUN: quantum-opt %s --quantum-decompose-gates='decompositions=Toffoli:qelib1' | FileCheck %s
 
 // UNCHANGED: "quantum.CCX"
 // CHECK-LABEL: func.func @toffoli(

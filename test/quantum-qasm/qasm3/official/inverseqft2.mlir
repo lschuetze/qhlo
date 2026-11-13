@@ -1,6 +1,6 @@
 // RUN: quantum-qasm %S/Inputs/inverseqft2.qasm > %t.mlir
 // RUN: FileCheck %s < %t.mlir
-// RUN: quantum-opt %t.mlir -verify-linearity -o /dev/null
+// RUN: quantum-opt %t.mlir -quantum-verify-linearity -o /dev/null
 
 // The unmodified upstream source and provenance are in Inputs/ and README.md.
 // Coverage: Scalar measurement bits and classical conditions.
